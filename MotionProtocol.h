@@ -3,8 +3,7 @@
 #define MotionProtocol_H
 
 #include <stdint.h>
-#include <stdio.h>
-#include "PmodCAN.h"
+#include "LoopBack.c"
 
 #define IDE 0
 #define RTR 0
