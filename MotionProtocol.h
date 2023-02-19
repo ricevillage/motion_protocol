@@ -5,8 +5,6 @@
 #include <stdint.h>
 #include "LoopBack.c"
 
-#define IDE 0
-#define RTR 0
 #define SRR 1
 #define DLC 8
 
