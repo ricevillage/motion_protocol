@@ -1,11 +1,20 @@
 
 #include "MotionProtocol.h"
 
+int8_t temperature;
+uint8_t posKp, posKi, velKp, velKi, curKp, curKi;
+uint16_t motorPower;
+int16_t current, velocity, motorShaftAngle;
+int32_t motorAngle, acceleration;
+
+
 void setCommonFields(CAN_Message *message, uint16_t id)
 {
     message->id = id;   // 11 bit id
-    message->srr = SRR; // Standard Frame Remote Transmit Request
     message->dlc = DLC; // Data length
+    message->eid = 0x0;
+    message->rtr = 0;
+    message->ide = 0;
 }
 
 void readPID(uint16_t id)
@@ -20,9 +29,9 @@ void readPID(uint16_t id)
     // Set message ID and data bytes if needed
     TxMessage.data[0] = 0x30; // Get PID constants
 
-    WriteCmd(TxMessage); // Send the message
+    WriteCmd(&TxMessage); // Send the message
     sleep(1);            // Wait for the motor to respond
-    ReadCmd(RxMessage);  // Read the response
+    ReadCmd(&RxMessage);  // Read the response
 
     // Parse the response and update the PID values
     curKp = RxMessage.data[2];
@@ -40,10 +49,10 @@ void readAcceleration(uint16_t id)
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x42;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     acceleration = ((uint32_t)RxMessage.data[7] << 24) |
                    ((uint32_t)RxMessage.data[6] << 16) |
@@ -58,10 +67,10 @@ void readPosition(uint16_t id)
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x92;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     motorAngle = ((uint32_t)RxMessage.data[7] << 24) |
                  ((uint32_t)RxMessage.data[6] << 16) |
@@ -76,10 +85,10 @@ void readPower(uint16_t id)
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x71;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     motorPower = ((uint16_t)RxMessage.data[7] << 8) |
                  RxMessage.data[6];
@@ -108,10 +117,10 @@ void writePID(uint16_t id, uint8_t currentPidKp, uint8_t currentPidKi, uint8_t s
     TxMessage.data[5] = speedPidKi;
     TxMessage.data[6] = positionPidKp;
     TxMessage.data[7] = positionPidKi;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     curKp = RxMessage.data[2];
     curKi = RxMessage.data[3];
@@ -142,10 +151,10 @@ void writeAcceleration(uint16_t id, uint32_t acceleration)
     TxMessage.data[5] = (acceleration >> 8) & 0xFF;
     TxMessage.data[6] = (acceleration >> 16) & 0xFF;
     TxMessage.data[7] = (acceleration >> 24) & 0xFF;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     acceleration = ((uint32_t)RxMessage.data[7] << 24) |
                    ((uint32_t)RxMessage.data[6] << 16) |
@@ -155,14 +164,16 @@ void writeAcceleration(uint16_t id, uint32_t acceleration)
 
 void clearState(uint16_t id)
 {
-    CAN_Message message;
-    setCommonFields(&message, id);
-    message.data[0] = 0x80;
+    CAN_Message TxMessage;
+    CAN_Message RxMessage;
 
-    WriteCmd(TxMessage);
+    setCommonFields(&TxMessage, id);
+    TxMessage.data[0] = 0x80;
+
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 }
 
 /*
@@ -182,10 +193,10 @@ void writeTorqueCurrent(uint16_t id, int16_t iqControl)
     TxMessage.data[0] = 0xA1;
     TxMessage.data[4] = iqControl & 0xFF;
     TxMessage.data[5] = (iqControl >> 8) & 0xFF;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     temperature = RxMessage.data[0];
     current = ((uint16_t)RxMessage.data[3] << 8) |
@@ -217,10 +228,10 @@ void writeVelocity(uint16_t id, int32_t speedControl)
     TxMessage.data[5] = (speedControl >> 8) & 0xFF;
     TxMessage.data[6] = (speedControl >> 16) & 0xFF;
     TxMessage.data[7] = (speedControl >> 24) & 0xFF;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     temperature = RxMessage.data[0];
     current = ((uint16_t)RxMessage.data[3] << 8) |
@@ -255,10 +266,10 @@ void writePosition(uint16_t id, uint16_t maxSpeed,
     TxMessage.data[5] = (angleControl >> 8) & 0xFF;
     TxMessage.data[6] = (angleControl >> 16) & 0xFF;
     TxMessage.data[7] = (angleControl >> 24) & 0xFF;
-    WriteCmd(TxMessage);
+    WriteCmd(&TxMessage);
 
     sleep(1);
-    ReadCmd(RxMessage);
+    ReadCmd(&RxMessage);
 
     temperature = RxMessage.data[0];
     current = ((uint16_t)RxMessage.data[3] << 8) |
@@ -267,4 +278,5 @@ void writePosition(uint16_t id, uint16_t maxSpeed,
                RxMessage.data[4];
     motorShaftAngle = ((uint16_t)RxMessage.data[7] << 8) |
                       RxMessage.data[6];
+
 }

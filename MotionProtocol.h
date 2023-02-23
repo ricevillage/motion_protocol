@@ -3,16 +3,10 @@
 #define MotionProtocol_H
 
 #include <stdint.h>
-#include "LoopBack.c"
+#include "PmodCAN.h"
+#include "CAN.h"
 
-#define SRR 1
 #define DLC 8
-
-int8_t temperature;
-uint8_t posKp, posKi, velKp, velKi, curKp, curKi;
-uint16_t motorPower;
-int16_t current, velocity, motorShaftAngle;
-int32_t motorAngle, acceleration;
 
 void setCommonFields(CAN_Message *message, uint16_t id);
 
