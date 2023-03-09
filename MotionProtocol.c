@@ -280,3 +280,56 @@ void writePosition(uint16_t id, uint16_t maxSpeed,
                       RxMessage.data[6];
 
 }
+
+
+int8_t get_temperature() {
+    return temperature;
+}
+
+uint8_t get_posKp() {
+    return posKp;
+}
+
+uint8_t get_posKi() {
+    return posKi;
+}
+
+uint8_t get_velKp() {
+    return velKp;
+}
+
+uint8_t get_velKi() {
+    return velKi;
+}
+
+uint8_t get_curKp() {
+    return curKp;
+}
+
+uint8_t get_curKi() {
+    return curKi;
+}
+
+uint16_t get_motorPower() {
+    return motorPower;
+}
+
+int16_t get_current() {
+    return current;
+}
+
+int16_t get_velocity() {
+    return velocity;
+}
+
+int16_t get_motorShaftAngle() {
+    return motorShaftAngle;
+}
+
+int32_t get_motorAngle() {
+    return motorAngle;
+}
+
+int32_t get_acceleration() {
+    return acceleration;
+}
