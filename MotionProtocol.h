@@ -1,6 +1,6 @@
 
-#ifndef MotionProtocol_H
-#define MotionProtocol_H
+#ifndef Motion_Protocol_H
+#define Motion_Protocol_H
 
 #include <stdint.h>
 #include "PmodCAN.h"
@@ -28,4 +28,4 @@ void writeTorqueCurrent(uint16_t id, int16_t iqControl);
 void writeVelocity(uint16_t id, int32_t speedControl);
 void writePosition(uint16_t id, uint16_t maxSpeed, int32_t angleControl);
 
-#endif // MotionProtocol_H
+#endif // Motion_Protocol_H

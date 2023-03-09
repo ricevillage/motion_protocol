@@ -2,6 +2,7 @@
 #include "unistd.h"
 #include "stdio.h"
 #include "MotionProtocol.h"
+#include "InverseKinematics.h"
 #include "CAN.h"
 
 #define MOTOR_ID1 0x141
@@ -9,19 +10,20 @@
 
 int main()
 {
-    Initialize();
-    clearState(MOTOR_ID1);
-    clearState(MOTOR_ID2);
+  Initialize();
+  clearState(MOTOR_ID1);
+  clearState(MOTOR_ID2);
 
-    while(1) {
-		writePosition(MOTOR_ID1, 500, 0);
-		writePosition(MOTOR_ID2, 500, 0);
-		writePosition(MOTOR_ID1, 500, 36000);
-		writePosition(MOTOR_ID2, 500, 36000);
-    }
+  while (1)
+  {
+    // writePosition(MOTOR_ID1, 500, 0);
+    // writePosition(MOTOR_ID2, 500, 0);
+    // writePosition(MOTOR_ID1, 500, 36000);
+    // writePosition(MOTOR_ID2, 500, 36000);
+  }
 
-    clearState(MOTOR_ID1);
-    clearState(MOTOR_ID2);
-    Cleanup();
-    return 0;
+  clearState(MOTOR_ID1);
+  clearState(MOTOR_ID2);
+  Cleanup();
+  return 0;
 }
