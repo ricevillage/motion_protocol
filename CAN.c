@@ -10,7 +10,7 @@ void ReadCmd(CAN_Message *message);
 void Initialize()
 {
    CAN_begin();
-   CAN_Configure(CAN_BUS1,CAN_ModeNormalOperation);
+   CAN_Configure(CAN_BUS1, CAN_ModeNormalOperation);
 }
 
 void PrintMessage(const CAN_Message *message)
@@ -101,7 +101,7 @@ void ReadCmd(CAN_Message *RxMessage)
    }
 
    CAN_ReceiveMessage(CAN_BUS1, RxMessage, target);
-   CAN_ModifyReg(CAN_BUS1,CAN_CANINTF_REG_ADDR, rx_int_mask, 0);
+   CAN_ModifyReg(CAN_BUS1, CAN_CANINTF_REG_ADDR, rx_int_mask, 0);
 
    printf("received \r\n");
    PrintMessage(RxMessage);

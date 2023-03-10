@@ -8,16 +8,20 @@
 #define MOTOR_ID1 0x141
 #define MOTOR_ID2 0x142
 
-int main()
+void moveKneeUp(uint16_t motorId1, uint16_t motorId2, double kneeHeight)
 {
   Initialize();
-  clearState(MOTOR_ID1);
-  clearState(MOTOR_ID2);
-
-  calculateLegJointAngles(MOTOR_ID1, MOTOR_ID2, 0.11);
-
-  clearState(MOTOR_ID1);
-  clearState(MOTOR_ID2);
+  clearState(motorId1);
+  clearState(motorId2);
+  calculateLegJointAngles(motorId1, motorId2, kneeHeight);
+  clearState(motorId1);
+  clearState(motorId2);
   Cleanup();
+}
+
+int main()
+{
+  double kneeHeight = 0.11;
+  moveKneeUp(motorId1, motorId2, kneeHeight);
   return 0;
 }

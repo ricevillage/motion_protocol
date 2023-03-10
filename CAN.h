@@ -12,4 +12,3 @@ void ReadCmd(CAN_Message *RxMessage);
 void Cleanup();
 
 #endif // CAN_H
-

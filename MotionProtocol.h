@@ -7,40 +7,37 @@
 #include "CAN.h"
 
 #define DLC 8
+#define M_PI 3.14159265358979323846
 
 void setCommonFields(CAN_Message *message, uint16_t id);
 
-// Commands
+// PID control
+void readPidData(uint16_t id);
+void writePidToRam(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t iqPidKp, uint8_t iqPidKi);
+void writePidToRom(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t iqPidKp, uint8_t iqPidKi);
 
-// Reading data
-void readPID(uint16_t id);
-int32_t readAcceleration(uint16_t id);
+// Motor Control
+void motorOff(uint16_t id);
+void motorResume(uint16_t id);
+void writeTorqueCurrent(uint16_t id, int8_t iqControlAmp);
+void writeVelocity(uint16_t id, uint8_t speedControlRPS);
+void writePosition1(uint16_t id, int16_t angleControlDegree);
+void writePosition2(uint16_t id, uint8_t maxSpeedRPS, int16_t angleControlDegree);
+void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControlDegree);
+void writePosition4(uint16_t id, uint8_t spinDirection, uint8_t maxSpeedRPS, uint16_t angleControlDegree);
+
+// Encoder and Position Control
+int32_t readAccelerationData(uint16_t id);
+void writeAccelerationToRam(uint16_t id, int16_t inputAcceleration_RPSS);
+void readEncoderData(uint16_t id);
+void writeEncoderOffset(uint16_t id, uint16_t inputEncoderOffset);
+void WritePositionZeroToRom(uint16_t id);
 int32_t readPosition(uint16_t id);
+uint8_t readCircleAngle(uint16_t id);
 
-// Writing data
-void writePID(uint16_t id, uint8_t currentPidKp, uint8_t currentPidKi,
-              uint8_t speedPidKp, uint8_t speedPidKi,
-              uint8_t positionPidKp, uint8_t positionPidKi);
-void writeAcceleration(uint16_t id, uint32_t acceleration);
-void clearState(uint16_t id);
-void writeTorqueCurrent(uint16_t id, int16_t iqControl);
-void writeVelocity(uint16_t id, int32_t speedControl);
-void writePosition(uint16_t id, uint16_t maxSpeed, int32_t angleControl);
-
-// Getters
-int8_t get_temperature();
-uint8_t get_posKp();
-uint8_t get_posKi();
-uint8_t get_velKp();
-uint8_t get_velKi();
-uint8_t get_curKp();
-uint8_t get_curKi();
-uint16_t get_motorPower();
-int16_t get_current();
-int16_t get_velocity();
-int16_t get_motorShaftAngle();
-int32_t get_motorAngle();
-int32_t get_acceleration();
-
+// Motor Status
+void readMotorStatus1(uint16_t id);
+void clearErrorFlag(uint16_t id);
+void readMotorStatus2(uint16_t id);
 
 #endif // MotionProtocol_H
