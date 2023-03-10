@@ -3,7 +3,6 @@
 
 int8_t temperature;
 uint8_t posKp, posKi, velKp, velKi, curKp, curKi;
-uint16_t motorPower;
 int16_t current, velocity, motorShaftAngle;
 int32_t motorAngle, acceleration;
 
@@ -20,8 +19,8 @@ void setCommonFields(CAN_Message *message, uint16_t id)
 void readPID(uint16_t id)
 {
     // Create a CAN message for transmission and reception
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     // Set common fields of TxMessage
     setCommonFields(&TxMessage, id);
@@ -42,13 +41,13 @@ void readPID(uint16_t id)
     posKi = RxMessage.data[7];
 }
 
-void readAcceleration(uint16_t id)
+int32_t readAcceleration(uint16_t id)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
-    TxMessage.data[0] = 0x42;
+    TxMessage.data[0] = 0x33;
     WriteCmd(&TxMessage);
 
     sleep(1);
@@ -58,12 +57,13 @@ void readAcceleration(uint16_t id)
                    ((uint32_t)RxMessage.data[6] << 16) |
                    ((uint32_t)RxMessage.data[5] << 8) |
                    RxMessage.data[4];
+    return acceleration;
 }
 
-void readPosition(uint16_t id)
+int32_t readPosition(uint16_t id)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x92;
@@ -72,27 +72,14 @@ void readPosition(uint16_t id)
     sleep(1);
     ReadCmd(&RxMessage);
 
-    motorAngle = ((uint32_t)RxMessage.data[7] << 24) |
-                 ((uint32_t)RxMessage.data[6] << 16) |
-                 ((uint32_t)RxMessage.data[5] << 8) |
-                 RxMessage.data[4];
+    motorAngle = ((uint32_t)RxMessage.data[4] << 24) |
+                 ((uint32_t)RxMessage.data[3] << 16) |
+                 ((uint32_t)RxMessage.data[2] << 8) |
+                 RxMessage.data[1];
+    motorAngle*= 0.01;
+    return motorAngle;
 }
 
-void readPower(uint16_t id)
-{
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
-
-    setCommonFields(&TxMessage, id);
-    TxMessage.data[0] = 0x71;
-    WriteCmd(&TxMessage);
-
-    sleep(1);
-    ReadCmd(&RxMessage);
-
-    motorPower = ((uint16_t)RxMessage.data[7] << 8) |
-                 RxMessage.data[6];
-}
 
 /*
     This writes current, speed, position loop KP, and KI parameters to RAM, but they are not saved after power off. The maximum range of PI parameters depends on the motor model. Users need to adjust only 0-256 units.
@@ -106,8 +93,8 @@ void readPower(uint16_t id)
 
 void writePID(uint16_t id, uint8_t currentPidKp, uint8_t currentPidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t positionPidKp, uint8_t positionPidKi)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x31;
@@ -142,11 +129,11 @@ void writePID(uint16_t id, uint8_t currentPidKp, uint8_t currentPidKi, uint8_t s
 
 void writeAcceleration(uint16_t id, uint32_t acceleration)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
-    TxMessage.data[0] = 0x43;
+    TxMessage.data[0] = 0x34;
     TxMessage.data[4] = acceleration & 0xFF;
     TxMessage.data[5] = (acceleration >> 8) & 0xFF;
     TxMessage.data[6] = (acceleration >> 16) & 0xFF;
@@ -164,8 +151,8 @@ void writeAcceleration(uint16_t id, uint32_t acceleration)
 
 void clearState(uint16_t id)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x80;
@@ -186,8 +173,8 @@ void clearState(uint16_t id)
 
 void writeTorqueCurrent(uint16_t id, int16_t iqControl)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0xA1;
@@ -219,8 +206,8 @@ void writeTorqueCurrent(uint16_t id, int16_t iqControl)
 
 void writeVelocity(uint16_t id, int32_t speedControl)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0xA2;
@@ -255,8 +242,8 @@ void writeVelocity(uint16_t id, int32_t speedControl)
 void writePosition(uint16_t id, uint16_t maxSpeed,
                    int32_t angleControl)
 {
-    CAN_Message TxMessage;
-    CAN_Message RxMessage;
+    CAN_Message TxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0xA4;
@@ -282,54 +269,63 @@ void writePosition(uint16_t id, uint16_t maxSpeed,
 }
 
 
-int8_t get_temperature() {
+int8_t get_temperature()
+{
     return temperature;
 }
 
-uint8_t get_posKp() {
+uint8_t get_posKp()
+{
     return posKp;
 }
 
-uint8_t get_posKi() {
+uint8_t get_posKi()
+{
     return posKi;
 }
 
-uint8_t get_velKp() {
+uint8_t get_velKp()
+{
     return velKp;
 }
 
-uint8_t get_velKi() {
+uint8_t get_velKi()
+{
     return velKi;
 }
 
-uint8_t get_curKp() {
+uint8_t get_curKp()
+{
     return curKp;
 }
 
-uint8_t get_curKi() {
+uint8_t get_curKi()
+{
     return curKi;
 }
 
-uint16_t get_motorPower() {
-    return motorPower;
-}
 
-int16_t get_current() {
+int16_t get_current()
+{
     return current;
 }
 
-int16_t get_velocity() {
+int16_t get_velocity()
+{
     return velocity;
 }
 
-int16_t get_motorShaftAngle() {
+int16_t get_motorShaftAngle()
+{
     return motorShaftAngle;
 }
 
-int32_t get_motorAngle() {
+int32_t get_motorAngle()
+{
     return motorAngle;
 }
 
-int32_t get_acceleration() {
+int32_t get_acceleration()
+{
     return acceleration;
 }

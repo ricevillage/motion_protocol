@@ -14,13 +14,7 @@ int main()
   clearState(MOTOR_ID1);
   clearState(MOTOR_ID2);
 
-  while (1)
-  {
-    // writePosition(MOTOR_ID1, 500, 0);
-    // writePosition(MOTOR_ID2, 500, 0);
-    // writePosition(MOTOR_ID1, 500, 36000);
-    // writePosition(MOTOR_ID2, 500, 36000);
-  }
+  calculateLegJointAngles(MOTOR_ID1, MOTOR_ID2, 0.11);
 
   clearState(MOTOR_ID1);
   clearState(MOTOR_ID2);
