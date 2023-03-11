@@ -259,7 +259,7 @@ uint8_t readCircleAngle(uint16_t id)
 }
 
 // Turn off the motor, while clearing the motor operating status and previously received control commands.
-void motorOff(uint16_t id)
+void clearState(uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -274,7 +274,7 @@ void motorOff(uint16_t id)
 }
 
 // Stop the motor, but do not clear the operating state and previously received control commands.
-void motorOff(uint16_t id)
+void motorPause(uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};

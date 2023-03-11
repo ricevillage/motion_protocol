@@ -10,7 +10,7 @@
 #define UPPER_LINK_LENGTH 0.22
 #define LOWER_LINK_LENGTH 0.22
 
-void calculateLegJointAngles(uint16_t id1, uint16_t id2, double z);
+void moveKneeToDesiredHeight(uint16_t id1, uint16_t id2, double z);
 int32_t clampAngle(int32_t angle);
 double acos(double x);
 

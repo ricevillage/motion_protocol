@@ -17,7 +17,8 @@ void writePidToRam(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t 
 void writePidToRom(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t iqPidKp, uint8_t iqPidKi);
 
 // Motor Control
-void motorOff(uint16_t id);
+void clearState(uint16_t id);
+void motorPause(uint16_t id);
 void motorResume(uint16_t id);
 void writeTorqueCurrent(uint16_t id, int8_t iqControlAmp);
 void writeVelocity(uint16_t id, uint8_t speedControlRPS);
