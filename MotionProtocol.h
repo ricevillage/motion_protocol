@@ -8,6 +8,7 @@
 
 #define DLC 8
 #define M_PI 3.14159265358979323846
+#define POSITION_FACTOR 0.17
 
 void setCommonFields(CAN_Message *message, uint16_t id);
 

@@ -152,6 +152,8 @@ void writeAccelerationToRam(uint16_t id, int16_t inputAcceleration_RPSS)
                    ((uint32_t)RxMessage.data[6] << 16) |
                    ((uint32_t)RxMessage.data[5] << 8) |
                    RxMessage.data[4];
+
+    printf("Acceleration: %d\n", acceleration);
 }
 
 // Read the current position of the encoder.
@@ -175,6 +177,8 @@ void readEncoderData(uint16_t id)
 
     encoderOffset = ((uint16_t)RxMessage.data[7] << 8) |
                     RxMessage.data[6];
+
+    printf("%d %d %d\n", encoderCurrentPosition, encoderOriginalPosition, encoderOffset);
 }
 
 // Set the motor's encoder offset.
@@ -211,7 +215,20 @@ void WritePositionZeroToRom(uint16_t id)
 
     encoderOffset = ((uint16_t)RxMessage.data[7] << 8) |
                     RxMessage.data[6];
+
+    printf("%d", encoderOffset);
 }
+
+
+// https://stackoverflow.com/questions/14997165/fastest-way-to-get-a-positive-modulo-in-c-c
+unsigned modulo( int value, unsigned m) {
+    int mod = value % (int)m;
+    if (mod < 0) {
+        mod += m;
+    }
+    return mod;
+}
+
 
 // Read the multi-turn angle of the motor.
 int32_t readPosition(uint16_t id)
@@ -235,6 +252,8 @@ int32_t readPosition(uint16_t id)
                  RxMessage.data[1];
 
     motorAngle = motorAngle * 0.01;
+    motorAngle = modulo(motorAngle*POSITION_FACTOR, 360);
+    printf("Multi-turn Angle: %ld\n", motorAngle);
     return motorAngle;
 }
 
@@ -255,6 +274,7 @@ uint8_t readCircleAngle(uint16_t id)
                   RxMessage.data[6];
 
     circleAngle = circleAngle * 0.01;
+    printf("Circle-Angle: %d\n", circleAngle);
     return circleAngle;
 }
 
@@ -324,7 +344,7 @@ void readMotorStatus1(uint16_t id)
     errorState = RxMessage.data[7];
 }
 
-// Clears the error status of the currrent motor.
+// Clears the error status of the current motor.
 void clearErrorFlag(uint16_t id)
 {
     CAN_Message TxMessage = {0};
@@ -366,6 +386,8 @@ void readMotorStatus2(uint16_t id)
                RxMessage.data[4];
     encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
                              RxMessage.data[6];
+
+    printf("Velocity: %d\n", velocity);
 }
 
 /*
@@ -437,7 +459,8 @@ void writeVelocity(uint16_t id, uint8_t speedControlRPS)
 
 void writePosition1(uint16_t id, int16_t angleControlDegree)
 {
-    int32_t angleControl = angleControlDegree * 100;
+    angleControlDegree = angleControlDegree/POSITION_FACTOR;
+    int32_t angleControl = (angleControlDegree * 100);
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -472,7 +495,11 @@ void writePosition2(uint16_t id, uint8_t maxSpeedRPS,
                     int16_t angleControlDegree)
 {
     int32_t maxSpeed = maxSpeedRPS * (180 / M_PI);
-    int32_t angleControl = angleControlDegree * 100;
+    printf("Input Angle: %d\n", angleControlDegree);
+
+    angleControlDegree = angleControlDegree/POSITION_FACTOR;
+    int32_t angleControl = (angleControlDegree * 100);
+    printf("Max Speed: %d\n", maxSpeed);
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -497,11 +524,13 @@ void writePosition2(uint16_t id, uint8_t maxSpeedRPS,
                RxMessage.data[4];
     encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
                              RxMessage.data[6];
+
+
 }
 
 /*
-    This writes control commands for the position of the motor. MaxSpeed limits the maximum speed of the motor output shaft rotation.
-    - Spin Direction:
+    This writes control commands for the position of the motor.
+        - Spin Direction:
         - 0x00 for clockwise
         - 0x01 for counterclockwise
     - angleControlDegree [degree]
@@ -509,7 +538,8 @@ void writePosition2(uint16_t id, uint8_t maxSpeedRPS,
 
 void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControlDegree)
 {
-    int32_t angleControl = angleControlDegree * 100;
+    angleControlDegree = angleControlDegree/POSITION_FACTOR;
+    int32_t angleControl = (angleControlDegree * 100);
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -546,7 +576,9 @@ void writePosition4(uint16_t id, uint8_t spinDirection,
                     uint8_t maxSpeedRPS, uint16_t angleControlDegree)
 {
     int32_t maxSpeed = maxSpeedRPS * (180 / M_PI);
-    int32_t angleControl = angleControlDegree * 100;
+
+    angleControlDegree = angleControlDegree/POSITION_FACTOR;
+    int32_t angleControl = (angleControlDegree * 100);
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};

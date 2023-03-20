@@ -34,23 +34,18 @@ void moveKneeToDesiredHeight(uint16_t id1, uint16_t id2, double z)
     int32_t currentKneeAngle = readPosition(id2);
 
     // calculating the new angles required to reach the desired knee joint height
-    int32_t newHipPitchAngle = clampAngle(hipPitchAngleDegrees - currentHipPitchAngle);
-    int32_t newKneeAngle = clampAngle(kneeAngleDegrees - currentKneeAngle);
+    int32_t newHipPitchAngle = (hipPitchAngleDegrees - currentHipPitchAngle);
+    int32_t newKneeAngle = (kneeAngleDegrees - currentKneeAngle);
 
     // printing the new angles for debugging purposes
     printf("Hip Pitch Angle: %d\n", newHipPitchAngle);
     printf("Knee Angle: %d\n", newKneeAngle);
 
     // writing the new angles to the motors
-    writePosition2(id1, 5, newHipPitchAngle);
-    writePosition2(id2, 5, newKneeAngle);
+    writePosition2(id1, 1, newHipPitchAngle);
+    writePosition2(id2, 1, newKneeAngle);
 }
 
-// Function to clamp angle values between 0 and 359 degrees
-int32_t clampAngle(int32_t angle)
-{
-    return (angle % 360) + (angle < 0 ? 360 : 0);
-}
 
 // Approximation of the inverse cosine function using a polynomial
 // https://stackoverflow.com/a/3380723

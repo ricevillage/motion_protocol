@@ -11,14 +11,10 @@
 int main()
 {
   Initialize();
-  clearState(MOTOR_ID1);
-  clearState(MOTOR_ID2);
 
-  double kneeHeight = 0.11;
-  moveKneeToDesiredHeight(MOTOR_ID1, MOTOR_ID2, kneeHeight);
+//  motorPause(MOTOR_ID1);
+  moveKneeToDesiredHeight(MOTOR_ID1, MOTOR_ID2, 0.11);
 
-  clearState(MOTOR_ID1);
-  clearState(MOTOR_ID2);
   Cleanup();
   return 0;
 }
