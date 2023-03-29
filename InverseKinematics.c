@@ -34,16 +34,16 @@ void moveKneeToDesiredHeight(uint16_t id1, uint16_t id2, double z)
     int32_t currentKneeAngle = readPosition(id2);
 
     // calculating the new angles required to reach the desired knee joint height
-    int32_t newHipPitchAngle = (hipPitchAngleDegrees - currentHipPitchAngle);
-    int32_t newKneeAngle = (kneeAngleDegrees - currentKneeAngle);
+    int16_t newHipPitchAngle =  (currentHipPitchAngle - hipPitchAngleDegrees);
+    int16_t newKneeAngle = (kneeAngleDegrees - currentKneeAngle);
 
     // printing the new angles for debugging purposes
     printf("Hip Pitch Angle: %d\n", newHipPitchAngle);
     printf("Knee Angle: %d\n", newKneeAngle);
 
     // writing the new angles to the motors
-    writePosition2(id1, 1, newHipPitchAngle);
-    writePosition2(id2, 1, newKneeAngle);
+//    writePosition2(id1, 100, newHipPitchAngle);
+//    writePosition2(id2, 100, newKneeAngle);
 }
 
 

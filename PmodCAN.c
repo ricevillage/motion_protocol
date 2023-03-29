@@ -96,7 +96,7 @@ static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
     };
 	*/
 
-	spi_ioc_transfer tr;
+	struct spi_ioc_transfer tr;
 
 	tr.tx_buf = (unsigned long)tx;
 	tr.rx_buf = (unsigned long)rx;

@@ -7,8 +7,7 @@
 #include "CAN.h"
 
 #define DLC 8
-#define M_PI 3.14159265358979323846
-#define POSITION_FACTOR 0.17
+#define POSITION_FACTOR 580
 
 void setCommonFields(CAN_Message *message, uint16_t id);
 
@@ -22,11 +21,11 @@ void clearState(uint16_t id);
 void motorPause(uint16_t id);
 void motorResume(uint16_t id);
 void writeTorqueCurrent(uint16_t id, int8_t iqControlAmp);
-void writeVelocity(uint16_t id, uint8_t speedControlRPS);
+void writeVelocity(uint16_t id, uint16_t speedControl);
 void writePosition1(uint16_t id, int16_t angleControlDegree);
-void writePosition2(uint16_t id, uint8_t maxSpeedRPS, int16_t angleControlDegree);
+void writePosition2(uint16_t id, uint16_t maxSpeed, int16_t angleControlDegree);
 void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControlDegree);
-void writePosition4(uint16_t id, uint8_t spinDirection, uint8_t maxSpeedRPS, uint16_t angleControlDegree);
+void writePosition4(uint16_t id, uint8_t spinDirection, uint16_t maxSpeed, uint16_t angleControlDegree);
 
 // Encoder and Position Control
 int32_t readAccelerationData(uint16_t id);

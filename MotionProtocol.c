@@ -126,14 +126,16 @@ int32_t readAccelerationData(uint16_t id)
 }
 
 /*
-    This writes acceleration to RAM, but it is not saved after power off.
-    inputAcceleration_RPSS [rad/s^2]
+    This writes acceleration to RAM, but it is not saved after power off. The parameter range is between 50-80000.
+    For example:
+    - Actual acceleration = acceleration * 1dps/s
+    - Acceleration = 10000 => 10000*1 = 10000dps/s
+    - 1 dps/s = 0.0174533 rad/s^2
+    - 10000 dps/s * 0.0174533 (rad/s^2 / dps/s) = 174.533 rad/s^2
 */
 
-void writeAccelerationToRam(uint16_t id, int16_t inputAcceleration_RPSS)
+void writeAccelerationToRam(uint16_t id, int16_t inputAcceleration)
 {
-    int32_t inputAcceleration = inputAcceleration_RPSS * (180 / M_PI);
-
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
 
@@ -178,7 +180,7 @@ void readEncoderData(uint16_t id)
     encoderOffset = ((uint16_t)RxMessage.data[7] << 8) |
                     RxMessage.data[6];
 
-    printf("%d %d %d\n", encoderCurrentPosition, encoderOriginalPosition, encoderOffset);
+    printf("encoderCurrentPosition: %d encoderOriginalPosition: %d encoderOffset: %d\n", encoderCurrentPosition, encoderOriginalPosition, encoderOffset);
 }
 
 // Set the motor's encoder offset.
@@ -220,17 +222,13 @@ void WritePositionZeroToRom(uint16_t id)
 }
 
 
-// https://stackoverflow.com/questions/14997165/fastest-way-to-get-a-positive-modulo-in-c-c
-unsigned modulo( int value, unsigned m) {
-    int mod = value % (int)m;
-    if (mod < 0) {
-        mod += m;
-    }
-    return mod;
-}
+/*
+ Read the multi-turn angle of the motor.
 
+ Motor angle, int64_t type data, positive value indicates clockwise cumulative angle, negative value
+ indicates counterclockwise cumulative angle, unit 0.01 ° / LSB.
+ */
 
-// Read the multi-turn angle of the motor.
 int32_t readPosition(uint16_t id)
 {
     CAN_Message TxMessage = {0};
@@ -251,8 +249,8 @@ int32_t readPosition(uint16_t id)
                  ((uint64_t)RxMessage.data[2] << 8) |
                  RxMessage.data[1];
 
-    motorAngle = motorAngle * 0.01;
-    motorAngle = modulo(motorAngle*POSITION_FACTOR, 360);
+    motorAngle = (int64_t)(motorAngle/POSITION_FACTOR) % 360;
+
     printf("Multi-turn Angle: %ld\n", motorAngle);
     return motorAngle;
 }
@@ -273,7 +271,7 @@ uint8_t readCircleAngle(uint16_t id)
     circleAngle = ((uint16_t)RxMessage.data[7] << 8) |
                   RxMessage.data[6];
 
-    circleAngle = circleAngle * 0.01;
+//    circleAngle = circleAngle * 0.01;
     printf("Circle-Angle: %d\n", circleAngle);
     return circleAngle;
 }
@@ -422,12 +420,16 @@ void writeTorqueCurrent(uint16_t id, int8_t iqControlAmp)
 
 /*
     This writes control commands for the speed of the motor output shaft.
-    - speedControlRPS [rad/s]
+    For example:
+    - Actual speed = speedControl * 0.01dps/LSB
+    - speedControl = 10000 => 10000*0.01 = 100dps
+    - 1 rad/s = 57.2958 dps
+    - 100 dps * (1 rad/s / 57.2958 dps) = 1.74533 rad/s
 */
 
-void writeVelocity(uint16_t id, uint8_t speedControlRPS)
+void writeVelocity(uint16_t id, uint16_t speedControl)
 {
-    int32_t speedControl = speedControlRPS * (180 / M_PI) * 100;
+	speedControl = speedControl * 100;
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -453,8 +455,12 @@ void writeVelocity(uint16_t id, uint8_t speedControlRPS)
 }
 
 /*
-    This writes control commands for the position of the motor. The rotation direction is equal to the target position minus the current position.
-    - angleControlDegree [degree]
+    This writes control commands for the position of the motor. The rotation direction is equal to the target position minus the current position. MaxSpeed limits the maximum speed of the motor output shaft rotation.
+    For example:
+    - Actual position = angleControl * 0.01degree/LSB
+    - angleControl = 36000 => 36000*0.01 = 360 degrees
+    - Actual speed = maxSpeed * 1dps/LSB
+    - maxSpeed = 500 => 500*1 = 500dps
 */
 
 void writePosition1(uint16_t id, int16_t angleControlDegree)
@@ -487,18 +493,26 @@ void writePosition1(uint16_t id, int16_t angleControlDegree)
 
 /*
     This writes control commands for the position of the motor. The rotation direction is equal to the target position minus the current position. MaxSpeed limits the maximum speed of the motor output shaft rotation.
-    - maxSpeedRPS [rad/s]
-    - angleControlDegree [degree]
+    For example:
+    - Actual position = angleControl * 0.01degree/LSB
+    - angleControl = 36000 => 36000*0.01 = 360 degrees
+    - Actual speed = maxSpeed * 1dps/LSB
+    - maxSpeed = 500 => 500*1 = 500dps
 */
 
-void writePosition2(uint16_t id, uint8_t maxSpeedRPS,
+void writePosition2(uint16_t id, uint16_t maxSpeed,
                     int16_t angleControlDegree)
 {
-    int32_t maxSpeed = maxSpeedRPS * (180 / M_PI);
     printf("Input Angle: %d\n", angleControlDegree);
 
-    angleControlDegree = angleControlDegree/POSITION_FACTOR;
-    int32_t angleControl = (angleControlDegree * 100);
+    if(angleControlDegree > 360) {
+    	angleControlDegree = 360;
+    }else if(angleControlDegree < 0) {
+    	angleControlDegree = 0;
+    }
+
+    int32_t angleControl = angleControlDegree*POSITION_FACTOR;
+
     printf("Max Speed: %d\n", maxSpeed);
 
     CAN_Message TxMessage = {0};
@@ -568,14 +582,15 @@ void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControlDeg
     - Spin Direction:
         - 0x00 for clockwise
         - 0x01 for counterclockwise
-    - maxSpeedRPS [rad/s]
+    - Actual speed = maxSpeed * 1dps/LSB
+    - maxSpeed = 500 => 500*1 = 500dps
     - angleControlDegree [degree]
+
 */
 
 void writePosition4(uint16_t id, uint8_t spinDirection,
-                    uint8_t maxSpeedRPS, uint16_t angleControlDegree)
+		uint16_t maxSpeed, uint16_t angleControlDegree)
 {
-    int32_t maxSpeed = maxSpeedRPS * (180 / M_PI);
 
     angleControlDegree = angleControlDegree/POSITION_FACTOR;
     int32_t angleControl = (angleControlDegree * 100);

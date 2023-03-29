@@ -1,12 +1,6 @@
 #include "PmodCAN.h"
 #include "CAN.h"
 
-void Initialize();
-void Cleanup();
-void PrintMessage(const CAN_Message *message);
-void WriteCmd(const CAN_Message *message);
-void ReadCmd(CAN_Message *message);
-
 void Initialize()
 {
    CAN_begin();
@@ -38,7 +32,7 @@ void PrintMessage(const CAN_Message *message)
       printf("        %02x\r\n", message->data[i]);
 }
 
-void WriteCmd(CAN_Message *TxMessage)
+void WriteCmd(const CAN_Message *TxMessage)
 {
    uint8_t status;
 

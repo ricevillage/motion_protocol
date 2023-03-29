@@ -7,7 +7,7 @@
 
 void Initialize();
 void PrintMessage(const CAN_Message *message);
-void WriteCmd(CAN_Message *TxMessage);
+void WriteCmd(const CAN_Message *TxMessage);
 void ReadCmd(CAN_Message *RxMessage);
 void Cleanup();
 
