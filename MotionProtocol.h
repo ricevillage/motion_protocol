@@ -41,4 +41,6 @@ void readMotorStatus1(uint16_t id);
 void clearErrorFlag(uint16_t id);
 void readMotorStatus2(uint16_t id);
 
+int16_t limitAngleRange(int16_t angle);
+
 #endif // MotionProtocol_H

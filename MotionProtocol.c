@@ -250,7 +250,6 @@ int32_t readPosition(uint16_t id)
                  RxMessage.data[1];
 
     motorAngle = (int64_t)(motorAngle/POSITION_FACTOR) % 360;
-
     printf("Multi-turn Angle: %ld\n", motorAngle);
     return motorAngle;
 }
@@ -459,14 +458,14 @@ void writeVelocity(uint16_t id, uint16_t speedControl)
     For example:
     - Actual position = angleControl * 0.01degree/LSB
     - angleControl = 36000 => 36000*0.01 = 360 degrees
-    - Actual speed = maxSpeed * 1dps/LSB
-    - maxSpeed = 500 => 500*1 = 500dps
 */
 
 void writePosition1(uint16_t id, int16_t angleControlDegree)
 {
-    angleControlDegree = angleControlDegree/POSITION_FACTOR;
-    int32_t angleControl = (angleControlDegree * 100);
+    printf("Input Angle: %d\n", angleControlDegree);
+
+    angleControlDegree = limitAngleRange(angleControlDegree);
+    int32_t angleControl = angleControlDegree*POSITION_FACTOR;
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -503,20 +502,15 @@ void writePosition1(uint16_t id, int16_t angleControlDegree)
 void writePosition2(uint16_t id, uint16_t maxSpeed,
                     int16_t angleControlDegree)
 {
-    printf("Input Angle: %d\n", angleControlDegree);
+//    printf("Input Angle: %d\n", angleControlDegree);
 
-    if(angleControlDegree > 360) {
-    	angleControlDegree = 360;
-    }else if(angleControlDegree < 0) {
-    	angleControlDegree = 0;
-    }
+//    angleControlDegree = limitAngleRange(angleControlDegree);
+    int32_t angleControl = (angleControlDegree*POSITION_FACTOR);
 
-    int32_t angleControl = angleControlDegree*POSITION_FACTOR;
-
-    printf("Max Speed: %d\n", maxSpeed);
+//    printf("Max Speed: %d\n", maxSpeed);
 
     CAN_Message TxMessage = {0};
-    CAN_Message RxMessage = {0};
+//    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0xA4;
@@ -528,16 +522,16 @@ void writePosition2(uint16_t id, uint16_t maxSpeed,
     TxMessage.data[7] = (angleControl >> 24) & 0xFF;
     WriteCmd(&TxMessage);
 
-    sleep(1);
-    ReadCmd(&RxMessage);
-
-    temperature = RxMessage.data[1] * (9 / 5) + 32;
-    torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
-                    RxMessage.data[2];
-    velocity = ((uint16_t)RxMessage.data[5] << 8) |
-               RxMessage.data[4];
-    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
-                             RxMessage.data[6];
+//    sleep(1);
+//    ReadCmd(&RxMessage);
+//
+//    temperature = RxMessage.data[1] * (9 / 5) + 32;
+//    torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
+//                    RxMessage.data[2];
+//    velocity = ((uint16_t)RxMessage.data[5] << 8) |
+//               RxMessage.data[4];
+//    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
+//                             RxMessage.data[6];
 
 
 }
@@ -552,8 +546,10 @@ void writePosition2(uint16_t id, uint16_t maxSpeed,
 
 void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControlDegree)
 {
-    angleControlDegree = angleControlDegree/POSITION_FACTOR;
-    int32_t angleControl = (angleControlDegree * 100);
+    printf("Input Angle: %d\n", angleControlDegree);
+
+//    angleControlDegree = limitAngleRange(angleControlDegree);
+    int32_t angleControl = angleControlDegree*POSITION_FACTOR;
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -592,8 +588,10 @@ void writePosition4(uint16_t id, uint8_t spinDirection,
 		uint16_t maxSpeed, uint16_t angleControlDegree)
 {
 
-    angleControlDegree = angleControlDegree/POSITION_FACTOR;
-    int32_t angleControl = (angleControlDegree * 100);
+    printf("Input Angle: %d\n", angleControlDegree);
+
+    angleControlDegree = limitAngleRange(angleControlDegree);
+    int32_t angleControl = (angleControlDegree*POSITION_FACTOR);
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -617,4 +615,17 @@ void writePosition4(uint16_t id, uint8_t spinDirection,
                RxMessage.data[4];
     encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
                              RxMessage.data[6];
+}
+
+int16_t limitAngleRange(int16_t angle)
+{
+    if(angle > 360)
+    {
+    	angle = angle - 360;
+    }else if(angle < 0)
+    {
+    	angle = angle * -1;
+    	angle = 360 - angle;
+    }
+    return angle;
 }
