@@ -27,51 +27,41 @@ void printJoingAngles(uint16_t kneeId, uint16_t hipId, uint16_t hipRollkneeId)
 	   int32_t kneeAngle = readPosition(kneeId);  // Knee
 	   int32_t hipAngle = readPosition(hipId); // Hip
 
-	   printf("Knee Angle: %d\n", kneeAngle);
-	   printf("Hip Angle: %d\n", hipAngle);
+	   printf("Knee Position: %d\n", kneeAngle);
+	   printf("Hip Position: %d\n", hipAngle);
    }
 }
 
 void legLoop1(uint16_t kneeId, uint16_t hipId)
 {
-	int32_t initialHipAngle = 5;
-	int32_t initialkneeAngle = 70;
 
-	int32_t gaitAngle = 5;
-	int32_t deltaTheta = 50;
-	uint16_t hipSpeed = 700;
+	clearState(kneeId);
+	clearState(hipId);
 
-	writePosition2(hipId, hipSpeed, initialHipAngle);
-	writePosition2(kneeId, hipSpeed, initialkneeAngle);
+
+	int32_t deltaTheta = 25000;
+	uint16_t hipSpeed = 300;
+
+	int32_t initialKneePosition = readPosition(kneeId);
+	int32_t initialHipPosition = readPosition(hipId);
+
+
+	writePosition4(kneeId, 0, 300, initialKneePosition + 20000);
+
+	sleep(1);
 
 	while(1)
 	{
-		writePosition2(hipId, hipSpeed, gaitAngle);
-		writePosition2(hipId, hipSpeed, gaitAngle + deltaTheta);
+		writePosition2(hipId, hipSpeed, initialHipPosition + deltaTheta);
+		writePosition2(hipId, hipSpeed, initialHipPosition);
 	}
 
-	writePosition2(hipId, hipSpeed, initialHipAngle);
-	writePosition2(kneeId, hipSpeed, initialkneeAngle);
+
+	clearState(kneeId);
+	clearState(hipId);
 }
 
 void legLoop2(uint16_t kneeId, uint16_t hipId)
 {
-	int32_t initialHipAngle = 5;
-	int32_t initialkneeAngle = 70;
 
-	int32_t gaitAngle = 65;
-	int32_t deltaTheta = 50;
-	uint16_t hipSpeed = 700;
-
-	writePosition2(hipId, hipSpeed, initialHipAngle);
-	writePosition2(kneeId, hipSpeed, initialkneeAngle);
-
-	while(1)
-	{
-		writePosition2(hipId, hipSpeed, gaitAngle);
-		writePosition2(hipId, hipSpeed, gaitAngle - deltaTheta);
-	}
-
-	writePosition2(hipId, hipSpeed, initialHipAngle);
-	writePosition2(kneeId, hipSpeed, initialkneeAngle);
 }

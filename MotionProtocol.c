@@ -249,8 +249,7 @@ int32_t readPosition(uint16_t id)
                  ((uint64_t)RxMessage.data[2] << 8) |
                  RxMessage.data[1];
 
-    motorAngle = (int64_t)(motorAngle/POSITION_FACTOR) % 360;
-    printf("Multi-turn Angle: %ld\n", motorAngle);
+    printf("Multi-turn Position: %d\n", motorAngle);
     return motorAngle;
 }
 
@@ -270,7 +269,6 @@ uint8_t readCircleAngle(uint16_t id)
     circleAngle = ((uint16_t)RxMessage.data[7] << 8) |
                   RxMessage.data[6];
 
-//    circleAngle = circleAngle * 0.01;
     printf("Circle-Angle: %d\n", circleAngle);
     return circleAngle;
 }
@@ -460,12 +458,9 @@ void writeVelocity(uint16_t id, uint16_t speedControl)
     - angleControl = 36000 => 36000*0.01 = 360 degrees
 */
 
-void writePosition1(uint16_t id, int16_t angleControlDegree)
+void writePosition1(uint16_t id, int16_t angleControl)
 {
-    printf("Input Angle: %d\n", angleControlDegree);
-
-    angleControlDegree = limitAngleRange(angleControlDegree);
-    int32_t angleControl = angleControlDegree*POSITION_FACTOR;
+    printf("Input Position: %d\n", angleControl);
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -500,12 +495,9 @@ void writePosition1(uint16_t id, int16_t angleControlDegree)
 */
 
 void writePosition2(uint16_t id, uint16_t maxSpeed,
-                    int16_t angleControlDegree)
+                    int16_t angleControl)
 {
-//    printf("Input Angle: %d\n", angleControlDegree);
-
-//    angleControlDegree = limitAngleRange(angleControlDegree);
-    int32_t angleControl = (angleControlDegree*POSITION_FACTOR);
+    printf("Input Position: %d\n", angleControl);
 
 //    printf("Max Speed: %d\n", maxSpeed);
 
@@ -544,12 +536,9 @@ void writePosition2(uint16_t id, uint16_t maxSpeed,
     - angleControlDegree [degree]
 */
 
-void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControlDegree)
+void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControl)
 {
-    printf("Input Angle: %d\n", angleControlDegree);
-
-//    angleControlDegree = limitAngleRange(angleControlDegree);
-    int32_t angleControl = angleControlDegree*POSITION_FACTOR;
+    printf("Input Position: %d\n", angleControl);
 
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -585,16 +574,13 @@ void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControlDeg
 */
 
 void writePosition4(uint16_t id, uint8_t spinDirection,
-		uint16_t maxSpeed, uint16_t angleControlDegree)
+		uint16_t maxSpeed, uint16_t angleControl)
 {
 
-    printf("Input Angle: %d\n", angleControlDegree);
-
-    angleControlDegree = limitAngleRange(angleControlDegree);
-    int32_t angleControl = (angleControlDegree*POSITION_FACTOR);
+    printf("Input Position: %d\n", angleControl);
 
     CAN_Message TxMessage = {0};
-    CAN_Message RxMessage = {0};
+//    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0xA6;
@@ -605,27 +591,14 @@ void writePosition4(uint16_t id, uint8_t spinDirection,
     TxMessage.data[5] = (angleControl >> 8) & 0xFF;
     WriteCmd(&TxMessage);
 
-    sleep(1);
-    ReadCmd(&RxMessage);
-
-    temperature = RxMessage.data[1] * (9 / 5) + 32;
-    torqueCurrent = ((int16_t)RxMessage.data[3] << 8) |
-                    RxMessage.data[2];
-    velocity = ((int16_t)RxMessage.data[5] << 8) |
-               RxMessage.data[4];
-    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
-                             RxMessage.data[6];
-}
-
-int16_t limitAngleRange(int16_t angle)
-{
-    if(angle > 360)
-    {
-    	angle = angle - 360;
-    }else if(angle < 0)
-    {
-    	angle = angle * -1;
-    	angle = 360 - angle;
-    }
-    return angle;
+//    sleep(1);
+//    ReadCmd(&RxMessage);
+//
+//    temperature = RxMessage.data[1] * (9 / 5) + 32;
+//    torqueCurrent = ((int16_t)RxMessage.data[3] << 8) |
+//                    RxMessage.data[2];
+//    velocity = ((int16_t)RxMessage.data[5] << 8) |
+//               RxMessage.data[4];
+//    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
+//                             RxMessage.data[6];
 }

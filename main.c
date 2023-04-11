@@ -21,19 +21,9 @@ int main()
 {
   Initialize();
 
-//  calibrateMotor(MOTOR_ID3);
-//  calibrateMotor(MOTOR_ID2);
-
-//  printJoingAngles(MOTOR_ID3, MOTOR_ID2, MOTOR_ID1);
+  printJoingAngles(MOTOR_ID3, MOTOR_ID2, MOTOR_ID1);
 
 //  legLoop1(MOTOR_ID3, MOTOR_ID2);
-
-
-  while(1)
-  {
-	  readEncoderData(0x144);
-  }
-
 
   Cleanup();
   return 0;
