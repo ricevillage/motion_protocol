@@ -2,8 +2,9 @@
 
 int8_t temperature;
 uint8_t anglePidKp, anglePidKi, speedPidKp, speedPidKi, iqPidKp, iqPidKi;
-uint8_t circleAngle, errorState;
+uint8_t errorState;
 int16_t torqueCurrent, velocity, voltage;
+uint16_t circleAngle;
 int32_t acceleration;
 int64_t motorAngle;
 uint16_t encoderCurrentPosition, encoderOriginalPosition, encoderOffset;
@@ -18,7 +19,7 @@ void setCommonFields(CAN_Message *message, uint16_t id)
 }
 
 // Read the motor's current PID parameters.
-void readPidData(uint16_t id)
+void readPidData(uint8_t CAN_BUS, uint16_t id)
 {
     // Create a CAN message for transmission and reception
     CAN_Message TxMessage = {0};
@@ -30,9 +31,9 @@ void readPidData(uint16_t id)
     // Set message ID and data bytes if needed
     TxMessage.data[0] = 0x30; // Get PID constants
 
-    WriteCmd(&TxMessage); // Send the message
+    WriteCmd(CAN_BUS, &TxMessage); // Send the message
     sleep(1);             // Wait for the motor to respond
-    ReadCmd(&RxMessage);  // Read the response
+    ReadCmd(CAN_BUS, &RxMessage);  // Read the response
 
     // Parse the response and update the PID values
     anglePidKp = RxMessage.data[2];
@@ -52,7 +53,7 @@ void readPidData(uint16_t id)
     - Current loop KP = 85* 0.01171875 = 0.99609375
 */
 
-void writePidToRam(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t iqPidKp, uint8_t iqPidKi)
+void writePidToRam(uint8_t CAN_BUS, uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t iqPidKp, uint8_t iqPidKi)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -65,10 +66,10 @@ void writePidToRam(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t 
     TxMessage.data[5] = speedPidKi;
     TxMessage.data[6] = iqPidKp;
     TxMessage.data[7] = iqPidKi;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     anglePidKp = RxMessage.data[2];
     anglePidKi = RxMessage.data[3];
@@ -79,7 +80,7 @@ void writePidToRam(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t 
 }
 
 // Write PID parameters to the ROM.
-void writePidToRom(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t iqPidKp, uint8_t iqPidKi)
+void writePidToRom(uint8_t CAN_BUS, uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t speedPidKp, uint8_t speedPidKi, uint8_t iqPidKp, uint8_t iqPidKi)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -92,10 +93,10 @@ void writePidToRom(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t 
     TxMessage.data[5] = speedPidKi;
     TxMessage.data[6] = iqPidKp;
     TxMessage.data[7] = iqPidKi;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     anglePidKp = RxMessage.data[2];
     anglePidKi = RxMessage.data[3];
@@ -106,17 +107,17 @@ void writePidToRom(uint16_t id, uint8_t anglePidKp, uint8_t anglePidKi, uint8_t 
 }
 
 // Read the motor's acceleration data.
-int32_t readAccelerationData(uint16_t id)
+int32_t readAccelerationData(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x33;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     acceleration = ((uint32_t)RxMessage.data[7] << 24) |
                    ((uint32_t)RxMessage.data[6] << 16) |
@@ -134,7 +135,7 @@ int32_t readAccelerationData(uint16_t id)
     - 10000 dps/s * 0.0174533 (rad/s^2 / dps/s) = 174.533 rad/s^2
 */
 
-void writeAccelerationToRam(uint16_t id, int16_t inputAcceleration)
+void writeAccelerationToRam(uint8_t CAN_BUS, uint16_t id, int16_t inputAcceleration)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -142,13 +143,13 @@ void writeAccelerationToRam(uint16_t id, int16_t inputAcceleration)
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x34;
     TxMessage.data[4] = inputAcceleration & 0xFF;
-    TxMessage.data[5] = (inputAcceleration >> 8) & 0xFF;
+    TxMessage.data[5] = (inputAcceleration >> 8) & 0xFF; // equivalent to *(uint8_t CAN_BUS, uint8_t *)(&Accel+1)
     TxMessage.data[6] = (inputAcceleration >> 16) & 0xFF;
     TxMessage.data[7] = (inputAcceleration >> 24) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     acceleration = ((uint32_t)RxMessage.data[7] << 24) |
                    ((uint32_t)RxMessage.data[6] << 16) |
@@ -159,17 +160,17 @@ void writeAccelerationToRam(uint16_t id, int16_t inputAcceleration)
 }
 
 // Read the current position of the encoder.
-void readEncoderData(uint16_t id)
+void readEncoderData(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x90;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     encoderCurrentPosition = ((uint16_t)RxMessage.data[3] << 8) |
                              RxMessage.data[2];
@@ -184,7 +185,7 @@ void readEncoderData(uint16_t id)
 }
 
 // Set the motor's encoder offset.
-void writeEncoderOffset(uint16_t id, uint16_t inputEncoderOffset)
+void writeEncoderOffset(uint8_t CAN_BUS, uint16_t id, uint16_t inputEncoderOffset)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -193,27 +194,27 @@ void writeEncoderOffset(uint16_t id, uint16_t inputEncoderOffset)
     TxMessage.data[0] = 0x91;
     TxMessage.data[6] = inputEncoderOffset & 0xFF;
     TxMessage.data[7] = (inputEncoderOffset >> 8) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     encoderOffset = ((uint16_t)RxMessage.data[7] << 8) |
                     RxMessage.data[6];
 }
 
 // Write the current position of the motor to the ROM as the motor zero position.
-void WritePositionZeroToRom(uint16_t id)
+void WritePositionZeroToRom(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x19;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     encoderOffset = ((uint16_t)RxMessage.data[7] << 8) |
                     RxMessage.data[6];
@@ -229,17 +230,17 @@ void WritePositionZeroToRom(uint16_t id)
  indicates counterclockwise cumulative angle, unit 0.01 ° / LSB.
  */
 
-int32_t readPosition(uint16_t id)
+int32_t readPosition(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x92;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     motorAngle = ((uint64_t)RxMessage.data[7] << 48) |
                  ((uint64_t)RxMessage.data[6] << 40) |
@@ -249,32 +250,37 @@ int32_t readPosition(uint16_t id)
                  ((uint64_t)RxMessage.data[2] << 8) |
                  RxMessage.data[1];
 
-    printf("Multi-turn Position: %d\n", motorAngle);
+//    printf("Multi-turn Position: %d\n", motorAngle);
     return motorAngle;
 }
 
 // Read the single circle angle of the motor.
-uint8_t readCircleAngle(uint16_t id)
+uint16_t readCircleAngle(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x94;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
-    circleAngle = ((uint16_t)RxMessage.data[7] << 8) |
+    uint16_t circleAngle1 = ((uint16_t)RxMessage.data[7] << 8) |
                   RxMessage.data[6];
+
+    uint16_t circleAngle2 = ((uint16_t)RxMessage.data[5] << 8) |
+                  RxMessage.data[4];
+
+    circleAngle = circleAngle1 | circleAngle2;
 
     printf("Circle-Angle: %d\n", circleAngle);
     return circleAngle;
 }
 
 // Turn off the motor, while clearing the motor operating status and previously received control commands.
-void clearState(uint16_t id)
+void clearState(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -282,14 +288,14 @@ void clearState(uint16_t id)
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x80;
 
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 }
 
 // Stop the motor, but do not clear the operating state and previously received control commands.
-void motorPause(uint16_t id)
+void motorPause(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -297,14 +303,14 @@ void motorPause(uint16_t id)
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x81;
 
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 }
 
 // Resume motor operation from the motor stop command.
-void motorResume(uint16_t id)
+void motorResume(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -312,14 +318,14 @@ void motorResume(uint16_t id)
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x88;
 
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 }
 
 // Reads the motor's error status, voltage, temperature and other information.
-void readMotorStatus1(uint16_t id)
+void readMotorStatus1(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -327,20 +333,20 @@ void readMotorStatus1(uint16_t id)
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x9A;
 
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     temperature = RxMessage.data[1] * (9 / 5) + 32;
     voltage = (((uint16_t)RxMessage.data[4] << 8) |
-               RxMessage.data[3]) *
-              0.1;
+                RxMessage.data[3]) *
+               0.1;
     errorState = RxMessage.data[7];
 }
 
 // Clears the error status of the current motor.
-void clearErrorFlag(uint16_t id)
+void clearErrorFlag(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -348,10 +354,10 @@ void clearErrorFlag(uint16_t id)
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x9B;
 
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     temperature = RxMessage.data[1] * (9 / 5) + 32;
     voltage = (((uint16_t)RxMessage.data[4] << 8) |
@@ -361,7 +367,7 @@ void clearErrorFlag(uint16_t id)
 }
 
 // Reads the motor temperature, voltage, speed and encoder position.
-void readMotorStatus2(uint16_t id)
+void readMotorStatus2(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -369,10 +375,10 @@ void readMotorStatus2(uint16_t id)
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x9C;
 
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     temperature = RxMessage.data[1] * (9 / 5) + 32;
     torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
@@ -390,7 +396,7 @@ void readMotorStatus2(uint16_t id)
     iqControlAmp [A]
 */
 
-void writeTorqueCurrent(uint16_t id, int8_t iqControlAmp)
+void writeTorqueCurrent(uint8_t CAN_BUS, uint16_t id, int8_t iqControlAmp)
 {
     int16_t iqControl = iqControlAmp * 100;
 
@@ -401,10 +407,10 @@ void writeTorqueCurrent(uint16_t id, int8_t iqControlAmp)
     TxMessage.data[0] = 0xA1;
     TxMessage.data[4] = iqControl & 0xFF;
     TxMessage.data[5] = (iqControl >> 8) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     temperature = RxMessage.data[1] * (9 / 5) + 32;
     torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
@@ -424,7 +430,7 @@ void writeTorqueCurrent(uint16_t id, int8_t iqControlAmp)
     - 100 dps * (1 rad/s / 57.2958 dps) = 1.74533 rad/s
 */
 
-void writeVelocity(uint16_t id, uint16_t speedControl)
+void writeVelocity(uint8_t CAN_BUS, uint16_t id, uint16_t speedControl)
 {
 	speedControl = speedControl * 100;
 
@@ -437,10 +443,10 @@ void writeVelocity(uint16_t id, uint16_t speedControl)
     TxMessage.data[5] = (speedControl >> 8) & 0xFF;
     TxMessage.data[6] = (speedControl >> 16) & 0xFF;
     TxMessage.data[7] = (speedControl >> 24) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     temperature = RxMessage.data[1] * (9 / 5) + 32;
     torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
@@ -458,7 +464,7 @@ void writeVelocity(uint16_t id, uint16_t speedControl)
     - angleControl = 36000 => 36000*0.01 = 360 degrees
 */
 
-void writePosition1(uint16_t id, int16_t angleControl)
+void writePosition1(uint8_t CAN_BUS, uint16_t id, int16_t angleControl)
 {
     printf("Input Position: %d\n", angleControl);
 
@@ -471,10 +477,10 @@ void writePosition1(uint16_t id, int16_t angleControl)
     TxMessage.data[5] = (angleControl >> 8) & 0xFF;
     TxMessage.data[6] = (angleControl >> 16) & 0xFF;
     TxMessage.data[7] = (angleControl >> 24) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     temperature = RxMessage.data[1] * (9 / 5) + 32;
     torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
@@ -494,7 +500,7 @@ void writePosition1(uint16_t id, int16_t angleControl)
     - maxSpeed = 500 => 500*1 = 500dps
 */
 
-void writePosition2(uint16_t id, uint16_t maxSpeed,
+void writePosition2(uint8_t CAN_BUS, uint16_t id, uint16_t maxSpeed,
                     int16_t angleControl)
 {
     printf("Input Position: %d\n", angleControl);
@@ -512,10 +518,10 @@ void writePosition2(uint16_t id, uint16_t maxSpeed,
     TxMessage.data[5] = (angleControl >> 8) & 0xFF;
     TxMessage.data[6] = (angleControl >> 16) & 0xFF;
     TxMessage.data[7] = (angleControl >> 24) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
 //    sleep(1);
-//    ReadCmd(&RxMessage);
+//    ReadCmd(CAN_BUS, &RxMessage);
 //
 //    temperature = RxMessage.data[1] * (9 / 5) + 32;
 //    torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
@@ -533,10 +539,10 @@ void writePosition2(uint16_t id, uint16_t maxSpeed,
         - Spin Direction:
         - 0x00 for clockwise
         - 0x01 for counterclockwise
-    - angleControlDegree [degree]
+    - angleControl
 */
 
-void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControl)
+void writePosition3(uint8_t CAN_BUS, uint16_t id, uint8_t spinDirection, uint16_t angleControl)
 {
     printf("Input Position: %d\n", angleControl);
 
@@ -548,18 +554,18 @@ void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControl)
     TxMessage.data[1] = spinDirection;
     TxMessage.data[4] = angleControl & 0xFF;
     TxMessage.data[5] = (angleControl >> 8) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);
-    ReadCmd(&RxMessage);
+    ReadCmd(CAN_BUS, &RxMessage);
 
     temperature = RxMessage.data[1] * (9 / 5) + 32;
-    torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
-                    RxMessage.data[2];
-    velocity = ((uint16_t)RxMessage.data[5] << 8) |
-               RxMessage.data[4];
-    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
-                             RxMessage.data[6];
+	torqueCurrent = ((uint16_t)RxMessage.data[3] << 8) |
+					 RxMessage.data[2];
+	velocity = ((uint16_t)RxMessage.data[5] << 8) |
+				RxMessage.data[4];
+	encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
+							  RxMessage.data[6];
 }
 
 /*
@@ -569,18 +575,18 @@ void writePosition3(uint16_t id, uint8_t spinDirection, uint16_t angleControl)
         - 0x01 for counterclockwise
     - Actual speed = maxSpeed * 1dps/LSB
     - maxSpeed = 500 => 500*1 = 500dps
-    - angleControlDegree [degree]
+    - angleControl
 
 */
 
-void writePosition4(uint16_t id, uint8_t spinDirection,
+void writePosition4(uint8_t CAN_BUS, uint16_t id, uint8_t spinDirection,
 		uint16_t maxSpeed, uint16_t angleControl)
 {
 
     printf("Input Position: %d\n", angleControl);
 
     CAN_Message TxMessage = {0};
-//    CAN_Message RxMessage = {0};
+    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0xA6;
@@ -589,16 +595,16 @@ void writePosition4(uint16_t id, uint8_t spinDirection,
     TxMessage.data[3] = (maxSpeed >> 8) & 0xFF;
     TxMessage.data[4] = angleControl & 0xFF;
     TxMessage.data[5] = (angleControl >> 8) & 0xFF;
-    WriteCmd(&TxMessage);
+    WriteCmd(CAN_BUS, &TxMessage);
 
-//    sleep(1);
-//    ReadCmd(&RxMessage);
-//
-//    temperature = RxMessage.data[1] * (9 / 5) + 32;
-//    torqueCurrent = ((int16_t)RxMessage.data[3] << 8) |
-//                    RxMessage.data[2];
-//    velocity = ((int16_t)RxMessage.data[5] << 8) |
-//               RxMessage.data[4];
-//    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
-//                             RxMessage.data[6];
+    sleep(1);
+    ReadCmd(CAN_BUS, &RxMessage);
+
+    temperature = RxMessage.data[1] * (9 / 5) + 32;
+    torqueCurrent = ((int16_t)RxMessage.data[3] << 8) |
+                    RxMessage.data[2];
+    velocity = ((int16_t)RxMessage.data[5] << 8) |
+               RxMessage.data[4];
+    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
+                             RxMessage.data[6];
 }

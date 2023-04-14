@@ -9,22 +9,30 @@
 #define MOTOR_ID2 0x142
 #define MOTOR_ID3 0x143
 
-void calibrateMotor(uint16_t id)
+/*
+ * Project github: https://github.com/ricevillage/motion_protocol
+ */
+
+void calibrateMotor(uint8_t CAN_BUS, uint16_t id)
 {
-  WritePositionZeroToRom(id);
-  writeEncoderOffset(id, 0);
-  readPosition(id);
-  readEncoderData(id);
+  WritePositionZeroToRom(CAN_BUS, id);
+  writeEncoderOffset(CAN_BUS, id, 0);
+  readPosition(CAN_BUS, id);
+  readEncoderData(CAN_BUS, id);
 }
 
 int main()
 {
-  Initialize();
+  Initialize(CAN_BUS1);
 
-  printJoingAngles(MOTOR_ID3, MOTOR_ID2, MOTOR_ID1);
+  printJoingAngles(CAN_BUS1, MOTOR_ID3, MOTOR_ID2, MOTOR_ID1);
 
-//  legLoop1(MOTOR_ID3, MOTOR_ID2);
+//  while(1)
+//  {
+//	  readEncoderData(CAN_BUS1, 0x141);
+//	  readPosition(CAN_BUS1, 0x141);
+//  }
 
-  Cleanup();
+  Cleanup(CAN_BUS1);
   return 0;
 }
