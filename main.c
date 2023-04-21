@@ -5,34 +5,21 @@
 #include "MotionController.h"
 #include "CAN.h"
 
-#define MOTOR_ID1 0x141
-#define MOTOR_ID2 0x142
-#define MOTOR_ID3 0x143
-
 /*
  * Project github: https://github.com/ricevillage/motion_protocol
  */
 
-void calibrateMotor(uint8_t CAN_BUS, uint16_t id)
-{
-  WritePositionZeroToRom(CAN_BUS, id);
-  writeEncoderOffset(CAN_BUS, id, 0);
-  readPosition(CAN_BUS, id);
-  readEncoderData(CAN_BUS, id);
-}
-
 int main()
 {
+  printf("Go coogs!\n");
   Initialize(CAN_BUS1);
+  Initialize(CAN_BUS2);
 
-  printJoingAngles(CAN_BUS1, MOTOR_ID3, MOTOR_ID2, MOTOR_ID1);
-
-//  while(1)
-//  {
-//	  readEncoderData(CAN_BUS1, 0x141);
-//	  readPosition(CAN_BUS1, 0x141);
-//  }
+//  performRobotStandTest();
+  legGait1();
 
   Cleanup(CAN_BUS1);
+  Cleanup(CAN_BUS2);
+
   return 0;
 }

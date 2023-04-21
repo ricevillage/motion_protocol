@@ -1,13 +1,14 @@
-
 #ifndef MotionController_H
 #define MotionController_H
 
 #include <stdint.h>
 #include "MotionProtocol.h"
 
-void test3DOF(uint8_t CAN_BUS, uint16_t kneeId, uint16_t hipId, uint16_t hipRollkneeId);
-void printJoingAngles(uint8_t CAN_BUS, uint16_t kneeId, uint16_t hipId, uint16_t hipRollkneeId);
-void legLoop1(uint8_t CAN_BUS, uint16_t kneeId, uint16_t hipId);
-void legLoop2(uint8_t CAN_BUS, uint16_t kneeId, uint16_t hipId);
+void setHipPitchStiffness();
+void setHipRollStiffness();
+void performRobotStandTest();
+void clearAllMotorStates();
+void printJoingAngles(uint8_t CAN_BUS, uint16_t kneeId, uint16_t hipId, uint16_t hipRollId);
+void calibrateMotor(uint8_t CAN_BUS, uint16_t id);
 
 #endif // MotionController_H

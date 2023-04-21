@@ -254,8 +254,7 @@ int32_t readPosition(uint8_t CAN_BUS, uint16_t id)
     return motorAngle;
 }
 
-// Read the single circle angle of the motor.
-uint16_t readCircleAngle(uint8_t CAN_BUS, uint16_t id)
+uint32_t readCircleAngle(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
     CAN_Message RxMessage = {0};
@@ -267,15 +266,7 @@ uint16_t readCircleAngle(uint8_t CAN_BUS, uint16_t id)
     sleep(1);
     ReadCmd(CAN_BUS, &RxMessage);
 
-    uint16_t circleAngle1 = ((uint16_t)RxMessage.data[7] << 8) |
-                  RxMessage.data[6];
-
-    uint16_t circleAngle2 = ((uint16_t)RxMessage.data[5] << 8) |
-                  RxMessage.data[4];
-
-    circleAngle = circleAngle1 | circleAngle2;
-
-    printf("Circle-Angle: %d\n", circleAngle);
+    circleAngle = RxMessage.data[7] << 24 | RxMessage.data[6] << 16 | RxMessage.data[5] << 8 | RxMessage.data[4];
     return circleAngle;
 }
 
@@ -283,15 +274,15 @@ uint16_t readCircleAngle(uint8_t CAN_BUS, uint16_t id)
 void clearState(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
-    CAN_Message RxMessage = {0};
+//    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x80;
 
     WriteCmd(CAN_BUS, &TxMessage);
 
-    sleep(1);
-    ReadCmd(CAN_BUS, &RxMessage);
+//    sleep(1);
+//    ReadCmd(CAN_BUS, &RxMessage);
 }
 
 // Stop the motor, but do not clear the operating state and previously received control commands.
@@ -501,7 +492,7 @@ void writePosition1(uint8_t CAN_BUS, uint16_t id, int16_t angleControl)
 */
 
 void writePosition2(uint8_t CAN_BUS, uint16_t id, uint16_t maxSpeed,
-                    int16_t angleControl)
+                    int32_t angleControl)
 {
     printf("Input Position: %d\n", angleControl);
 
@@ -531,6 +522,27 @@ void writePosition2(uint8_t CAN_BUS, uint16_t id, uint16_t maxSpeed,
 //    encoderCurrentPosition = ((uint16_t)RxMessage.data[7] << 8) |
 //                             RxMessage.data[6];
 
+
+}
+
+void writePositionAngle(uint8_t CAN_BUS, uint16_t id, uint16_t maxSpeed,
+                    int32_t angleControl)
+{
+//    printf("Input Position: %d\n", angleControl);
+//    printf("Max Speed: %d\n", maxSpeed);
+
+    CAN_Message TxMessage = {0};
+//    CAN_Message RxMessage = {0};
+
+    setCommonFields(&TxMessage, id);
+    TxMessage.data[0] = 0xA8;
+    TxMessage.data[2] = maxSpeed & 0xFF;
+    TxMessage.data[3] = (maxSpeed >> 8) & 0xFF;
+    TxMessage.data[4] = angleControl & 0xFF;
+    TxMessage.data[5] = (angleControl >> 8) & 0xFF;
+    TxMessage.data[6] = (angleControl >> 16) & 0xFF;
+    TxMessage.data[7] = (angleControl >> 24) & 0xFF;
+    WriteCmd(CAN_BUS, &TxMessage);
 
 }
 
@@ -580,7 +592,7 @@ void writePosition3(uint8_t CAN_BUS, uint16_t id, uint8_t spinDirection, uint16_
 */
 
 void writePosition4(uint8_t CAN_BUS, uint16_t id, uint8_t spinDirection,
-		uint16_t maxSpeed, uint16_t angleControl)
+		uint16_t maxSpeed, uint32_t angleControl)
 {
 
     printf("Input Position: %d\n", angleControl);
@@ -590,11 +602,24 @@ void writePosition4(uint8_t CAN_BUS, uint16_t id, uint8_t spinDirection,
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0xA6;
-    TxMessage.data[1] = spinDirection;
-    TxMessage.data[2] = maxSpeed & 0xFF;
-    TxMessage.data[3] = (maxSpeed >> 8) & 0xFF;
-    TxMessage.data[4] = angleControl & 0xFF;
-    TxMessage.data[5] = (angleControl >> 8) & 0xFF;
+   // TxMessage.data[1] = spinDirection;
+   // TxMessage.data[2] = maxSpeed & 0xFF;
+   // TxMessage.data[3] = (maxSpeed >> 8) & 0xFF;
+   // TxMessage.data[4] = angleControl & 0xFF;
+   // TxMessage.data[5] = (angleControl >> 8) & 0xFF;
+   // TxMessage.data[6] = (angleControl >> 16) & 0xFF;
+   // TxMessage.data[7] = (angleControl >> 24) & 0xFF;
+
+     TxMessage.data[1] =  1;
+     TxMessage.data[2] = maxSpeed & 0xFF;
+     TxMessage.data[3] = (maxSpeed >> 8) & 0xFF;
+     TxMessage.data[4] = 0x00; //angleControl & 0xFF;
+     TxMessage.data[5] = 0x00; //(angleControl >> 8) & 0xFF;
+     TxMessage.data[6] = 0x00; //(angleControl >> 16) & 0xFF;
+     TxMessage.data[7] = 0x00; // (angleControl >> 24) & 0xFF;
+
+
+
     WriteCmd(CAN_BUS, &TxMessage);
 
     sleep(1);

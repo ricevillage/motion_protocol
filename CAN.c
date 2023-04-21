@@ -11,7 +11,7 @@ void PrintMessage(uint8_t CAN_BUS, const CAN_Message *message)
 {
    uint8_t i;
 
-   printf("message:\r\n");
+   printf("message from CAN %d:\r\n", CAN_BUS);
 
    printf("    %s Frame\r\n", (message->ide) ? "Extended" : "Standard");
    printf("    ID: %03x\r\n", message->id);
@@ -36,20 +36,20 @@ void WriteCmd(uint8_t CAN_BUS, const CAN_Message *TxMessage)
 {
    uint8_t status;
 
-   printf("Bus 1 *****************************\r\n");
+//   printf("Bus 1 *****************************\r\n");
    // Wait for buffer 0 to be clear
    do
    {
       status = CAN_ReadStatus(CAN_BUS);
-      printf("Waiting to send\r\n");
+//      printf("Waiting to send\r\n");
    } while ((status & CAN_STATUS_TX0REQ_MASK) != 0);
 
-   printf("sending ");
-   PrintMessage(CAN_BUS, TxMessage);
+//   printf("sending ");
+//   PrintMessage(CAN_BUS, TxMessage);
 
    CAN_ModifyReg(CAN_BUS, CAN_CANINTF_REG_ADDR, CAN_CANINTF_TX0IF_MASK, 0);
 
-   printf("requesting to transmit message through transmit buffer 0\r\n");
+//   printf("requesting to transmit message through transmit buffer 0\r\n");
 
    CAN_SendMessage(CAN_BUS, *TxMessage, CAN_Tx0);
    CAN_ModifyReg(CAN_BUS, CAN_CANINTF_REG_ADDR, CAN_CANINTF_TX0IF_MASK, 0);
@@ -58,7 +58,7 @@ void WriteCmd(uint8_t CAN_BUS, const CAN_Message *TxMessage)
    do
    {
       status = CAN_ReadStatus(CAN_BUS);
-      printf("Waiting to complete transmission\r\n");
+//      printf("Waiting to complete transmission\r\n");
    } while ((status & CAN_STATUS_TX0IF_MASK) != 0);
 }
 

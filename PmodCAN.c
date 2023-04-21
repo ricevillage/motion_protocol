@@ -79,47 +79,63 @@ static void pabort(const char *s)
 **   Description:
 **      SPI transfer
 */
+//static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
+//{
+//	/* struct spi_ioc_transfer {
+//	__u64		tx_buf;
+//	__u64		rx_buf;
+//	__u32		len;
+//	__u32		speed_hz;
+//	__u16		delay_usecs;
+//	__u8		bits_per_word;
+//	__u8		cs_change;
+//	__u8		tx_nbits;
+//	__u8		rx_nbits;
+//	__u8		word_delay_usecs;
+//	__u8		pad;
+//    };
+//	*/
+//
+//	struct spi_ioc_transfer tr;
+//
+//	tr.tx_buf = (unsigned long)tx;
+//	tr.rx_buf = (unsigned long)rx;
+//	tr.len = (unsigned int)len;
+//	tr.speed_hz = (unsigned int)speed;
+//	tr.delay_usecs = (unsigned short)delay;
+//	tr.bits_per_word = (unsigned char)bits;
+//	tr.cs_change = (unsigned char)false;
+//	tr.tx_nbits = (unsigned char)8;
+//	tr.rx_nbits = (unsigned char)8;
+//	tr.word_delay_usecs = (unsigned char)0;
+//	tr.pad = (unsigned char)0;
+//
+//	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+//	if(errno != 0)
+//		printf("errno:0x%X\n", errno);
+//
+//	if (ret < 1)
+//	{
+//		pabort("can't send spi message!");
+//	}
+//}
+
 static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 {
-	/* struct spi_ioc_transfer {
-	__u64		tx_buf;
-	__u64		rx_buf;
-	__u32		len;
-	__u32		speed_hz;
-	__u16		delay_usecs;
-	__u8		bits_per_word;
-	__u8		cs_change;
-	__u8		tx_nbits;
-	__u8		rx_nbits;
-	__u8		word_delay_usecs;
-	__u8		pad;
-    };
-	*/
-
-	struct spi_ioc_transfer tr;
-
-	tr.tx_buf = (unsigned long)tx;
-	tr.rx_buf = (unsigned long)rx;
-	tr.len = (unsigned int)len;
-	tr.speed_hz = (unsigned int)speed;
-	tr.delay_usecs = (unsigned short)delay;
-	tr.bits_per_word = (unsigned char)bits;
-	tr.cs_change = (unsigned char)false;
-	tr.tx_nbits = (unsigned char)8;
-	tr.rx_nbits = (unsigned char)8;
-	tr.word_delay_usecs = (unsigned char)0;
-	tr.pad = (unsigned char)0;
+	int ret;
+	struct spi_ioc_transfer tr = {
+		.tx_buf = (unsigned long)tx,
+		.rx_buf = (unsigned long)rx,
+		.len = len,
+		.delay_usecs = delay,
+		.speed_hz = speed,
+		.bits_per_word = bits,
+	};
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
-	if(errno != 0)
-		printf("errno:0x%X\n", errno);
-
 	if (ret < 1)
-	{
-		pabort("can't send spi message!");
-	}
+		pabort("can't send spi message");
 }
-
 
 
 /************************** CAN Function Definitions ***************************/
@@ -156,11 +172,11 @@ int CAN_SPIInit() {
    fd[0] = open(device1, O_RDWR);
    if (fd[0] < 0)
 	   pabort("can't open device1\n");
-/*
+
    fd[1] = open(device2, O_RDWR);
    if (fd[1] < 0)
 	   pabort("can't open device2\n");
-*/
+
 
    	/* set spi mode for devices */
 
@@ -169,69 +185,66 @@ int CAN_SPIInit() {
    	ret = ioctl(fd[0], SPI_IOC_WR_MODE32, &mode);
    	if (ret == -1)
    		pabort("can't set spi1 mode wr");
-/*
+
    	ret = ioctl(fd[1], SPI_IOC_WR_MODE32, &mode);
    	if (ret == -1)
    		pabort("can't set spi2 mode wr");
-*/
+
    	/* RD is read what mode the device actually is in */
    	ret = ioctl(fd[0], SPI_IOC_RD_MODE32, &modeDev1);
    	if (ret == -1)
    		pabort("can't get spi1 mode rd");
-/*
+
    	ret = ioctl(fd[1], SPI_IOC_RD_MODE32, &modeDev2);
    	if (ret == -1)
    		pabort("can't get spi2 mode rd");
-*/
+
    	/* drivers can reject some mode bits without returning an error.
    	 * Read the current value to identify what mode it is in, and if it
    	 * differs from the requested mode, warn the user.
    	 */
    	if (request != modeDev1)
    		printf("WARNING dev 1 does not support requested mode 0x%x\n",request);
-/*
+
    	if (request != modeDev2)
    		printf("WARNING dev 2 does not support requested mode 0x%x\n",request);
-*/
 
    	/* set 8 bits per word */
 
    	ret = ioctl(fd[0], SPI_IOC_WR_BITS_PER_WORD, &bits);
    	if (ret == -1)
    		pabort("can't set bits per word 1");
-/*
+
    	ret = ioctl(fd[1], SPI_IOC_WR_BITS_PER_WORD, &bits);
    	if (ret == -1)
    		pabort("can't set bits per word 2");
-*/
 
    	ret = ioctl(fd[0], SPI_IOC_RD_BITS_PER_WORD, &bits);
    	if (ret == -1)
    		pabort("can't get bits per word 1");
-/*
+
    	ret = ioctl(fd[1], SPI_IOC_RD_BITS_PER_WORD, &bits);
    	if (ret == -1)
    		pabort("can't get bits per word 2");
-*/
 
    	/* set max speed hz*/
 
    	ret = ioctl(fd[0], SPI_IOC_WR_MAX_SPEED_HZ, &speed);
    	if (ret == -1)
    		pabort("can't set max speed hz 1");
-/*
+
    	ret = ioctl(fd[1], SPI_IOC_WR_MAX_SPEED_HZ, &speed);
    	if (ret == -1)
    		pabort("can't set max speed hz 2");
-*/
+
    	ret = ioctl(fd[0], SPI_IOC_RD_MAX_SPEED_HZ, &speed);
    	if (ret == -1)
      	pabort("can't get max speed hz 1");
-/*
+
    	ret = ioctl(fd[1], SPI_IOC_RD_MAX_SPEED_HZ, &speed);
    	if (ret == -1)
      	pabort("can't get max speed hz 2");
-*/
+
    return status;
 }
 
@@ -712,9 +725,9 @@ XStatus CAN_SendMessage(uint32_t bus,CAN_Message message, CAN_TxBuffer target) {
    for (i = 0; i < message.dlc; i++)
       data[i + 5] = message.data[i];
 
-   printf("CAN_SendMessage message.dlc: %02x\r\n", message.dlc);
-   for (i = 0; i < 5 + message.dlc; i++)
-      printf("CAN_SendMessage: %02x\r\n", data[i]);
+//   printf("CAN_SendMessage message.dlc: %02x\r\n", message.dlc);
+//   for (i = 0; i < 5 + message.dlc; i++)
+//      printf("CAN_SendMessage: %02x\r\n", data[i]);
 
    CAN_LoadTxBuffer(bus,load_start_addr, data, message.dlc + 5);
    CAN_RequestToSend(bus,rts_mask);
