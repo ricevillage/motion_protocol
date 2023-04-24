@@ -1,5 +1,7 @@
 #include "MotionController.h"
 
+int currentState = INITIAL_STATE;
+
 void setHipPitchStiffness()
 {
 	uint16_t maxSpeed = 100;
@@ -64,65 +66,139 @@ void performRobotStandTest()
 		}
 	}
 
+	clearAllMotorStates();
+}
 
-//	if(command == x)
-//	{
-//		// expand front knees
-//		writePositionAngle(CAN_BUS1, 0x143, maxSpeed, deltaAngle);
-//		writePositionAngle(CAN_BUS1, 0x146, maxSpeed, -deltaAngle);
-//
-//		// expand back knees
-//		writePositionAngle(CAN_BUS2, 0x143, maxSpeed, deltaAngle);
-//		writePositionAngle(CAN_BUS2, 0x146, maxSpeed, -deltaAngle);
-//	}
-//
-////	sleep(10);
-//	else if(command == y)
-//	{
-//		deltaAngle/=2;
-//
-//		for(int32_t i = 0; i < 20; i++)
-//		{
-//			// contract front knees
-//			writePositionAngle(CAN_BUS1, 0x143, maxSpeed, -deltaAngle/10);
-//			writePositionAngle(CAN_BUS1, 0x146, maxSpeed, deltaAngle/10);
-//
-//			// contract back knees
-//			writePositionAngle(CAN_BUS2, 0x143, maxSpeed, -deltaAngle/10);
-//			writePositionAngle(CAN_BUS2, 0x146, maxSpeed, deltaAngle/10);
-//		}
-//	}
+void robotStandUpCommand()
+{
+	clearAllMotorStates();
+
+	uint16_t maxSpeed = 100;
+	int32_t deltaAngle = 20000;
+
+	setHipPitchStiffness();
+	setHipRollStiffness();
+
+	// expand front knees
+	writePositionAngle(CAN_BUS1, 0x143, maxSpeed, deltaAngle);
+	writePositionAngle(CAN_BUS1, 0x146, maxSpeed, -deltaAngle);
+
+	// expand back knees
+	writePositionAngle(CAN_BUS2, 0x143, maxSpeed, deltaAngle);
+	writePositionAngle(CAN_BUS2, 0x146, maxSpeed, -deltaAngle);
 
 //	clearAllMotorStates();
 }
 
-void legGait1()
+void robotSitDownCommand()
 {
 	clearAllMotorStates();
 
-	while(1)
+	uint16_t maxSpeed = 100;
+	int32_t deltaAngle = 20000;
+
+	deltaAngle/=2;
+
+	for(int32_t i = 0; i < 20; i++)
+	{
+		// contract front knees
+		writePositionAngle(CAN_BUS1, 0x143, maxSpeed, -deltaAngle/10);
+		writePositionAngle(CAN_BUS1, 0x146, maxSpeed, deltaAngle/10);
+
+		// contract back knees
+		writePositionAngle(CAN_BUS2, 0x143, maxSpeed, -deltaAngle/10);
+		writePositionAngle(CAN_BUS2, 0x146, maxSpeed, deltaAngle/10);
+	}
+
+//	clearAllMotorStates();
+}
+
+/*
+ left side from robot POV: CAN_BUS1/CAN_BUS2: 0x146, 0x145
+ right side from robot POV: CAN_BUS1/CAN_BUS2: 0x143, 0x142
+ */
+void legGaitForward(int file_desc)
+{
+	clearAllMotorStates();
+	setHipRollStiffness();
+	currentState = INITIAL_STATE;
+
+	while(currentState == INITIAL_STATE)
 	{
 	    // knee expand
 	    writePositionAngle(CAN_BUS1, 0x146, 100, -40000);
 	    writePositionAngle(CAN_BUS2, 0x146, 100, -60000);
+
+	    writePositionAngle(CAN_BUS1, 0x143, 100, 40000);
+	    writePositionAngle(CAN_BUS2, 0x143, 100, 40000);
 	    sleep(3);
 	    // hip up
 	    writePositionAngle(CAN_BUS1, 0x145, 200, -20000);
 	    writePositionAngle(CAN_BUS2, 0x145, 200, -30000);
+
+	    writePositionAngle(CAN_BUS1, 0x142, 200, 20000);
+	    writePositionAngle(CAN_BUS2, 0x142, 200, 20000);
 	    // knee contract
 	    writePositionAngle(CAN_BUS1, 0x146, 300, 40000);
 	    writePositionAngle(CAN_BUS2, 0x146, 300, 60000);
+
+	    writePositionAngle(CAN_BUS1, 0x143, 300, -40000);
+	    writePositionAngle(CAN_BUS2, 0x143, 300, -40000);
 	    sleep(1);
 	    // hip down
 	    writePositionAngle(CAN_BUS1, 0x145, 300, 20000);
 	    writePositionAngle(CAN_BUS2, 0x145, 300, 30000);
+
+	    writePositionAngle(CAN_BUS1, 0x142, 300, -20000);
+	    writePositionAngle(CAN_BUS2, 0x142, 300, -20000);
+
+		updateChannelState(file_desc);
+	}
+}
+
+void legGaitBackward(int file_desc)
+{
+	clearAllMotorStates();
+	setHipRollStiffness();
+	currentState = INITIAL_STATE;
+
+	while(currentState == INITIAL_STATE)
+	{
+		// knee contract
+		writePositionAngle(CAN_BUS1, 0x146, 100, 20000);
+		writePositionAngle(CAN_BUS2, 0x146, 300, 30000);
+
+	    writePositionAngle(CAN_BUS1, 0x143, 300, -20000);
+	    writePositionAngle(CAN_BUS2, 0x143, 300, -20000);
+		sleep(3);
+	    // hip up
+	    writePositionAngle(CAN_BUS1, 0x145, 200, -20000);
+	    writePositionAngle(CAN_BUS2, 0x145, 200, -30000);
+
+	    writePositionAngle(CAN_BUS1, 0x142, 200, 20000);
+	    writePositionAngle(CAN_BUS2, 0x142, 200, 20000);
+		// knee expand
+		writePositionAngle(CAN_BUS1, 0x146, 300, -20000);
+		writePositionAngle(CAN_BUS2, 0x146, 300, -30000);
+
+	    writePositionAngle(CAN_BUS1, 0x143, 100, 20000);
+	    writePositionAngle(CAN_BUS2, 0x143, 100, 20000);
+		sleep(1);
+	    // hip down
+	    writePositionAngle(CAN_BUS1, 0x145, 300, 20000);
+	    writePositionAngle(CAN_BUS2, 0x145, 300, 30000);
+
+	    writePositionAngle(CAN_BUS1, 0x142, 300, -20000);
+	    writePositionAngle(CAN_BUS2, 0x142, 300, -20000);
+
+		updateChannelState(file_desc);
 	}
 }
 
 void clearAllMotorStates()
 {
 	// front legs
-	clearState(CAN_BUS1, 0x141);
+//	clearState(CAN_BUS1, 0x141);
 	clearState(CAN_BUS1, 0x142);
 	clearState(CAN_BUS1, 0x143);
 
@@ -138,6 +214,27 @@ void clearAllMotorStates()
 	clearState(CAN_BUS2, 0x144);
 	clearState(CAN_BUS2, 0x145);
 	clearState(CAN_BUS2, 0x146);
+}
+
+void StopAllMotors()
+{
+	// front legs
+//	motorPause(CAN_BUS1, 0x141);
+	motorPause(CAN_BUS1, 0x142);
+	motorPause(CAN_BUS1, 0x143);
+
+	motorPause(CAN_BUS1, 0x144);
+	motorPause(CAN_BUS1, 0x145);
+	motorPause(CAN_BUS1, 0x146);
+
+	// back legs
+	motorPause(CAN_BUS2, 0x141);
+	motorPause(CAN_BUS2, 0x142);
+	motorPause(CAN_BUS2, 0x143);
+
+	motorPause(CAN_BUS2, 0x144);
+	motorPause(CAN_BUS2, 0x145);
+	motorPause(CAN_BUS2, 0x146);
 }
 
 void printJoingAngles(uint8_t CAN_BUS, uint16_t kneeId, uint16_t hipId, uint16_t hipRollId)

@@ -289,15 +289,15 @@ void clearState(uint8_t CAN_BUS, uint16_t id)
 void motorPause(uint8_t CAN_BUS, uint16_t id)
 {
     CAN_Message TxMessage = {0};
-    CAN_Message RxMessage = {0};
+//    CAN_Message RxMessage = {0};
 
     setCommonFields(&TxMessage, id);
     TxMessage.data[0] = 0x81;
 
     WriteCmd(CAN_BUS, &TxMessage);
 
-    sleep(1);
-    ReadCmd(CAN_BUS, &RxMessage);
+//    sleep(1);
+//    ReadCmd(CAN_BUS, &RxMessage);
 }
 
 // Resume motor operation from the motor stop command.
